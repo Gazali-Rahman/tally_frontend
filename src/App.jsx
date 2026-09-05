@@ -7,6 +7,7 @@ import { AppShell } from './components/layout/AppShell';
 import { SummaryCards } from './components/dashboard/SummaryCards';
 import { TransactionList } from './components/transactions/TransactionList';
 import { TransactionModal } from './components/transactions/TransactionModal';
+import { ReceiptScannerModal } from './components/transactions/ReceiptScannerModal';
 import { GroupModal } from './components/groups/GroupModal';
 import { ThemeModal } from './components/theme/ThemeModal';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
@@ -30,6 +31,8 @@ const Dashboard = () => {
   // Modal States
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState(null);
+  const [scannedTxData, setScannedTxData] = useState(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
@@ -104,11 +107,20 @@ const Dashboard = () => {
 
   const handleOpenAddTransaction = () => {
     setTransactionToEdit(null);
+    setScannedTxData(null);
     setIsTxModalOpen(true);
   };
 
   const handleEditTransaction = (tx) => {
     setTransactionToEdit(tx);
+    setScannedTxData(null);
+    setIsTxModalOpen(true);
+  };
+
+  const handleQuickScanComplete = (scannedData) => {
+    setIsScannerOpen(false);
+    setTransactionToEdit(null);
+    setScannedTxData(scannedData);
     setIsTxModalOpen(true);
   };
 
@@ -146,6 +158,7 @@ const Dashboard = () => {
       onOpenGroupModal={() => setIsGroupModalOpen(true)}
       onOpenThemeModal={() => setIsThemeModalOpen(true)}
       onOpenAddTransaction={handleOpenAddTransaction}
+      onOpenReceiptScanner={() => setIsScannerOpen(true)}
       activeTab={activeTab}
       onTabChange={setActiveTab}
     >
@@ -181,10 +194,20 @@ const Dashboard = () => {
       {/* Modals */}
       <TransactionModal
         isOpen={isTxModalOpen}
-        onClose={() => setIsTxModalOpen(false)}
+        onClose={() => {
+          setIsTxModalOpen(false);
+          setScannedTxData(null);
+        }}
         groupId={currentGroup?.id}
         transactionToEdit={transactionToEdit}
+        initialData={scannedTxData}
         onSuccess={handleTransactionSuccess}
+      />
+
+      <ReceiptScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanComplete={handleQuickScanComplete}
       />
 
       <GroupModal

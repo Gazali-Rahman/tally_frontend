@@ -10,7 +10,8 @@ import {
   Users, 
   PlusCircle, 
   Layers,
-  BarChart3
+  BarChart3,
+  Camera
 } from 'lucide-react';
 import tallyLogo from '../../assets/tally.jpg';
 
@@ -22,6 +23,7 @@ export const AppShell = ({
   onOpenGroupModal,
   onOpenThemeModal,
   onOpenAddTransaction,
+  onOpenReceiptScanner,
   activeTab = 'transactions',
   onTabChange,
 }) => {
@@ -208,15 +210,26 @@ export const AppShell = ({
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={onOpenAddTransaction}
-              style={{ backgroundColor: 'var(--primary-color, #003049)' }}
-              className="py-2 px-4 rounded-xl text-white text-xs font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all flex items-center gap-1.5 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Catat Transaksi</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={onOpenReceiptScanner}
+                title="Pindai Struk Kasir (OCR)"
+                className="p-2 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-700 active:scale-95 transition-all flex items-center justify-center"
+              >
+                <Camera className="w-4 h-4 text-slate-700" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenAddTransaction}
+                style={{ backgroundColor: 'var(--primary-color, #003049)' }}
+                className="py-2 px-3.5 rounded-xl text-white text-xs font-semibold shadow-sm hover:opacity-95 active:scale-[0.98] transition-all flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Catat Transaksi</span>
+              </button>
+            </div>
           </div>
         </div>
 

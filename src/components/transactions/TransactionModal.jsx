@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { transactionService } from '../../services/api';
 import { CATEGORIES } from '../../utils/formatters';
-import { X, ArrowDownCircle, ArrowUpCircle, Calendar, Tag, FileText, DollarSign } from 'lucide-react';
+import { X, ArrowDownCircle, ArrowUpCircle, Calendar, Tag, FileText, DollarSign, Camera } from 'lucide-react';
+import { ReceiptScannerModal } from './ReceiptScannerModal';
 
 export const TransactionModal = ({
   isOpen,
   onClose,
   groupId,
   transactionToEdit,
+  initialData,
   onSuccess,
 }) => {
   const [type, setType] = useState('expense');
@@ -19,6 +21,7 @@ export const TransactionModal = ({
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     if (transactionToEdit) {
@@ -29,6 +32,14 @@ export const TransactionModal = ({
         transactionToEdit.transaction_date || new Date().toISOString().split('T')[0]
       );
       setDescription(transactionToEdit.description || '');
+    } else if (initialData) {
+      setType(initialData.type || 'expense');
+      setAmount(initialData.amount || '');
+      setCategory(initialData.category || CATEGORIES[initialData.type || 'expense'][0]);
+      setTransactionDate(
+        initialData.transaction_date || new Date().toISOString().split('T')[0]
+      );
+      setDescription(initialData.description || '');
     } else {
       setType('expense');
       setAmount('');
@@ -37,7 +48,17 @@ export const TransactionModal = ({
       setDescription('');
     }
     setError('');
-  }, [transactionToEdit, isOpen]);
+  }, [transactionToEdit, initialData, isOpen]);
+
+  const handleScanComplete = (scanned) => {
+    if (!scanned) return;
+    if (scanned.type) setType(scanned.type);
+    if (scanned.amount) setAmount(scanned.amount);
+    if (scanned.category) setCategory(scanned.category);
+    if (scanned.transaction_date) setTransactionDate(scanned.transaction_date);
+    if (scanned.description) setDescription(scanned.description);
+    setIsScannerOpen(false);
+  };
 
   // Update default category when type changes
   const handleTypeChange = (newType) => {
@@ -111,6 +132,18 @@ export const TransactionModal = ({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Quick OCR Scan Button */}
+        {!transactionToEdit && (
+          <button
+            type="button"
+            onClick={() => setIsScannerOpen(true)}
+            className="w-full py-2.5 px-3 rounded-xl border border-dashed border-sky-300 bg-sky-50/70 hover:bg-sky-100/70 text-sky-800 text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+          >
+            <Camera className="w-4 h-4 text-sky-600" />
+            <span>Pindai Struk Kasir Otomatis (OCR)</span>
+          </button>
+        )}
 
         {/* Error Alert */}
         {error && (
@@ -241,6 +274,13 @@ export const TransactionModal = ({
           </div>
         </form>
       </div>
+
+      {/* Receipt Scanner Modal (OCR) */}
+      <ReceiptScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanComplete={handleScanComplete}
+      />
     </div>
   );
 };
