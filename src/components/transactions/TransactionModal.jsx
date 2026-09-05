@@ -198,7 +198,7 @@ export const TransactionModal = ({
               required
               value={transactionDate}
               onChange={(e) => setTransactionDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white"
+              className="w-full max-w-full min-w-0 block box-border px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white"
             />
           </div>
 

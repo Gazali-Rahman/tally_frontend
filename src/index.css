@@ -57,3 +57,18 @@ body {
 .theme-secondary-text {
   color: var(--secondary-color);
 }
+
+/* Fix iOS Safari Date Input overflow and text alignment */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.25rem;
+}
