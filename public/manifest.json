@@ -1,0 +1,23 @@
+{
+  "short_name": "Tally",
+  "name": "Tally — Income & Expense Tracker",
+  "icons": [
+    {
+      "src": "/tally.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/tally.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#003049",
+  "display": "standalone",
+  "orientation": "portrait"
+}
