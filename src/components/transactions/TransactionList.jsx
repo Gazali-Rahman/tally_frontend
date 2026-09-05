@@ -34,6 +34,29 @@ export const TransactionList = ({
     setSelectedYear(currentYear);
   };
 
+  // Pastikan urutan transaksi selalu dari yang paling baru ke yang paling lama
+  const sortedTransactions = React.useMemo(() => {
+    if (!transactions || !Array.isArray(transactions)) return [];
+    return [...transactions].sort((a, b) => {
+      // 1. Urutkan berdasarkan tanggal transaksi (terbaru lebih dulu)
+      const dateA = new Date(a.transaction_date).getTime();
+      const dateB = new Date(b.transaction_date).getTime();
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      // 2. Jika tanggal sama, urutkan berdasarkan waktu pencatatan (created_at)
+      if (b.created_at && a.created_at) {
+        const createdA = new Date(a.created_at).getTime();
+        const createdB = new Date(b.created_at).getTime();
+        if (createdB !== createdA) {
+          return createdB - createdA;
+        }
+      }
+      // 3. Fallback ID terbaru
+      return (b.id || 0) - (a.id || 0);
+    });
+  }, [transactions]);
+
   return (
     <div className="space-y-3">
       {/* Filter Bar */}
@@ -92,7 +115,7 @@ export const TransactionList = ({
           Riwayat Transaksi
         </h3>
         <span className="text-[11px] text-slate-500 font-medium">
-          {transactions?.length || 0} catatan
+          {sortedTransactions.length} catatan
         </span>
       </div>
 
@@ -103,8 +126,8 @@ export const TransactionList = ({
             <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto" />
             <p>Memuat riwayat transaksi...</p>
           </div>
-        ) : transactions && transactions.length > 0 ? (
-          transactions.map((tx) => {
+        ) : sortedTransactions.length > 0 ? (
+          sortedTransactions.map((tx) => {
             const isIncome = tx.type === 'income';
             return (
               <div
