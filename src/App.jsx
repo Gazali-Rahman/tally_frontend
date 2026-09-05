@@ -10,7 +10,7 @@ import { TransactionModal } from './components/transactions/TransactionModal';
 import { GroupModal } from './components/groups/GroupModal';
 import { ThemeModal } from './components/theme/ThemeModal';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
-import { Wallet } from 'lucide-react';
+import tallyLogo from './assets/tally.jpg';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -214,12 +214,11 @@ const Main = () => {
         className="min-h-screen flex flex-col items-center justify-center space-y-3"
         style={{ backgroundColor: 'var(--bg-color, #ffffff)' }}
       >
-        <div 
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md animate-bounce"
-          style={{ backgroundColor: 'var(--primary-color, #003049)' }}
-        >
-          <Wallet className="w-6 h-6" />
-        </div>
+        <img 
+          src={tallyLogo} 
+          alt="Tally Logo" 
+          className="w-14 h-14 rounded-2xl object-cover shadow-sm animate-pulse border border-slate-200/80" 
+        />
         <p className="text-xs font-semibold text-slate-500 tracking-wide uppercase">
           Memuat Tally...
         </p>

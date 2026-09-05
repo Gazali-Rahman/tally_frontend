@@ -12,6 +12,7 @@ import {
   Layers,
   BarChart3
 } from 'lucide-react';
+import tallyLogo from '../../assets/tally.jpg';
 
 export const AppShell = ({
   children,
@@ -45,12 +46,11 @@ export const AppShell = ({
               onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
               className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-slate-100 transition-colors text-left max-w-full"
             >
-              <div 
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0"
-                style={{ backgroundColor: 'var(--primary-color, #003049)' }}
-              >
-                <Wallet className="w-3.5 h-3.5" />
-              </div>
+              <img 
+                src={tallyLogo}
+                alt="Tally Logo"
+                className="w-8 h-8 rounded-lg object-cover border border-slate-200/80 shadow-xs shrink-0"
+              />
 
               <div className="min-w-0 pr-1">
                 <span className="text-[10px] text-slate-400 font-medium block leading-none">Dompet Bersama</span>

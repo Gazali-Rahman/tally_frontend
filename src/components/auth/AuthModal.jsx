@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Wallet, Lock, Mail, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Lock, Mail, User as UserIcon, ArrowRight } from 'lucide-react';
+import tallyLogo from '../../assets/tally.jpg';
 
 export const AuthModal = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -37,20 +38,21 @@ export const AuthModal = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-200/80 shadow-md p-6 sm:p-8 space-y-6">
-        {/* Brand Header */}
+        {/* Brand Header with Tally Logo */}
         <div className="text-center space-y-2">
-          <div 
-            className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center text-white shadow-sm transition-transform hover:scale-105"
-            style={{ backgroundColor: 'var(--primary-color, #003049)' }}
-          >
-            <Wallet className="w-6 h-6" />
+          <img 
+            src={tallyLogo} 
+            alt="Tally Logo" 
+            className="w-16 h-16 rounded-2xl mx-auto object-cover border border-slate-200/80 shadow-sm transition-transform hover:scale-105"
+          />
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              Tally
+            </h1>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Shared Finance &amp; Cashflow Tracker
+            </p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Tally
-          </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Pencatatan Keuangan &amp; Dompet Bersama
-          </p>
         </div>
 
         {/* Tab Toggle */}
