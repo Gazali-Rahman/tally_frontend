@@ -11,6 +11,8 @@ import { ReceiptScannerModal } from './components/transactions/ReceiptScannerMod
 import { GroupModal } from './components/groups/GroupModal';
 import { ThemeModal } from './components/theme/ThemeModal';
 import { AnalyticsDashboard } from './components/analytics/AnalyticsDashboard';
+import { ToastNotification } from './components/common/ToastNotification';
+import { getEcho } from './services/echo';
 import tallyLogo from './assets/tally.jpg';
 
 const Dashboard = () => {
@@ -36,6 +38,9 @@ const Dashboard = () => {
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [analyticsRefreshTrigger, setAnalyticsRefreshTrigger] = useState(0);
+
+  // Real-Time Notification State
+  const [notification, setNotification] = useState(null);
 
   // Load Groups
   const fetchGroups = async () => {
@@ -100,6 +105,108 @@ const Dashboard = () => {
       fetchGroupData(currentGroup.id);
     }
   }, [currentGroup?.id, selectedMonth, selectedYear]);
+
+  // Real-Time Event Broadcasting via WebSockets (Pusher / Echo)
+  useEffect(() => {
+    if (!currentGroup?.id) return;
+
+    const echo = getEcho();
+    if (!echo) return;
+
+    const channelName = `group.${currentGroup.id}`;
+
+    echo.private(channelName)
+      .listen('.transaction.created', (event) => {
+        const createdTx = event.transaction;
+        if (createdTx) {
+          // Check if it matches active month/year filter
+          const txDate = new Date(createdTx.transaction_date);
+          const matchesMonth = !selectedMonth || String(txDate.getMonth() + 1) === String(selectedMonth);
+          const matchesYear = !selectedYear || String(txDate.getFullYear()) === String(selectedYear);
+
+          if (matchesMonth && matchesYear) {
+            setTransactions((prev) => {
+              if (prev.some((t) => t.id === createdTx.id)) return prev;
+              return [createdTx, ...prev];
+            });
+          }
+
+          // Update summary balance
+          setSummary((prev) => {
+            if (!prev) return prev;
+            const inc = createdTx.type === 'income' ? Number(createdTx.amount) : 0;
+            const exp = createdTx.type === 'expense' ? Number(createdTx.amount) : 0;
+            return {
+              ...prev,
+              total_income: prev.total_income + inc,
+              total_expense: prev.total_expense + exp,
+              balance: prev.balance + inc - exp,
+            };
+          });
+
+          // Invalidate and refresh analytics tab
+          setAnalyticsRefreshTrigger((prev) => prev + 1);
+
+          // Show Toast notification if created by another member
+          if (createdTx.user_id !== user?.id) {
+            setNotification({
+              type: createdTx.type,
+              title: createdTx.type === 'income' ? 'Pemasukan Baru' : 'Pengeluaran Baru',
+              message: event.message || `${createdTx.user?.name || 'Pasangan'} mencatat transaksi baru`,
+            });
+          }
+        }
+      })
+      .listen('.transaction.updated', (event) => {
+        const updatedTx = event.transaction;
+        if (updatedTx) {
+          setTransactions((prev) =>
+            prev.map((t) => (t.id === updatedTx.id ? updatedTx : t))
+          );
+          // Refetch summary cleanly
+          transactionService.getSummary(currentGroup.id).then((res) => {
+            if (res && res.summary) setSummary(res.summary);
+          });
+          setAnalyticsRefreshTrigger((prev) => prev + 1);
+
+          if (updatedTx.user_id !== user?.id) {
+            setNotification({
+              type: updatedTx.type,
+              title: 'Transaksi Diperbarui',
+              message: event.message || `${updatedTx.user?.name || 'Pasangan'} memperbarui transaksi`,
+            });
+          }
+        }
+      })
+      .listen('.transaction.deleted', (event) => {
+        const { id, amount, type: delType, userName } = event;
+        if (id) {
+          setTransactions((prev) => prev.filter((t) => t.id !== id));
+          setSummary((prev) => {
+            if (!prev) return prev;
+            const inc = delType === 'income' ? Number(amount) : 0;
+            const exp = delType === 'expense' ? Number(amount) : 0;
+            return {
+              ...prev,
+              total_income: Math.max(0, prev.total_income - inc),
+              total_expense: Math.max(0, prev.total_expense - exp),
+              balance: prev.balance - inc + exp,
+            };
+          });
+          setAnalyticsRefreshTrigger((prev) => prev + 1);
+
+          setNotification({
+            type: 'deleted',
+            title: 'Transaksi Dihapus',
+            message: event.message || `${userName || 'Pasangan'} menghapus transaksi`,
+          });
+        }
+      });
+
+    return () => {
+      echo.leave(channelName);
+    };
+  }, [currentGroup?.id, selectedMonth, selectedYear, user?.id]);
 
   // Handlers
   const handleSelectGroup = (group) => {
@@ -229,6 +336,12 @@ const Dashboard = () => {
       <ThemeModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* Real-Time WebSocket Toast Notification */}
+      <ToastNotification
+        notification={notification}
+        onClose={() => setNotification(null)}
       />
     </AppShell>
   );
