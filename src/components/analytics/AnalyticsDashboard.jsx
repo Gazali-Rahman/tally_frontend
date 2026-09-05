@@ -16,30 +16,73 @@ import {
   Award
 } from 'lucide-react';
 
-export const AnalyticsDashboard = ({ groupId, groupName }) => {
+// Module-level in-memory cache keyed by `${groupId}_${period}`
+const analyticsCache = new Map();
+
+export const AnalyticsDashboard = ({ groupId, groupName, refreshTrigger }) => {
   const [period, setPeriod] = useState('this_month'); // 'this_month' | '3_months' | 'this_year' | 'all'
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `${groupId}_${period}`;
+
+  const [data, setData] = useState(() => analyticsCache.get(cacheKey) || null);
+  const [loading, setLoading] = useState(() => !analyticsCache.has(cacheKey));
+  const [isRevalidating, setIsRevalidating] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (force = false) => {
     if (!groupId) return;
-    try {
+    const currentKey = `${groupId}_${period}`;
+    const cached = analyticsCache.get(currentKey);
+
+    if (cached && !force) {
+      setData(cached);
+      setLoading(false);
+      return;
+    }
+
+    if (cached && force) {
+      setIsRevalidating(true);
+    } else {
       setLoading(true);
-      setError('');
+    }
+
+    setError('');
+    try {
       const res = await transactionService.getAnalytics(groupId, { period });
+      analyticsCache.set(currentKey, res);
       setData(res);
     } catch (err) {
       console.error('Error fetching analytics:', err);
-      setError('Gagal memuat data analitik.');
+      if (!cached) {
+        setError('Gagal memuat data analitik.');
+      }
     } finally {
       setLoading(false);
+      setIsRevalidating(false);
     }
   };
 
+  // When groupId or period changes
   useEffect(() => {
-    fetchAnalytics();
+    const currentKey = `${groupId}_${period}`;
+    if (analyticsCache.has(currentKey)) {
+      setData(analyticsCache.get(currentKey));
+      setLoading(false);
+    } else {
+      fetchAnalytics();
+    }
   }, [groupId, period]);
+
+  // Invalidate cache and refetch when refreshTrigger increments (e.g. transaction added/edited/deleted)
+  useEffect(() => {
+    if (refreshTrigger > 0 && groupId) {
+      for (const key of Array.from(analyticsCache.keys())) {
+        if (key.startsWith(`${groupId}_`)) {
+          analyticsCache.delete(key);
+        }
+      }
+      fetchAnalytics(true);
+    }
+  }, [refreshTrigger]);
 
   const periods = [
     { value: 'this_month', label: 'Bulan Ini' },
@@ -48,24 +91,54 @@ export const AnalyticsDashboard = ({ groupId, groupName }) => {
     { value: 'all', label: 'Semua' },
   ];
 
-  if (loading) {
+  // Initial skeleton loader when no data exists in cache yet
+  if (loading && !data) {
     return (
-      <div className="py-16 text-center space-y-3">
-        <div className="w-8 h-8 border-3 border-t-transparent rounded-full animate-spin mx-auto text-slate-400"
-          style={{ borderColor: 'var(--primary-color, #003049)', borderTopColor: 'transparent' }}
-        />
-        <p className="text-xs font-semibold text-slate-500">Menganalisis data keuangan {groupName}...</p>
+      <div className="space-y-4 animate-fadeIn">
+        {/* Period Filter Pills Skeleton */}
+        <div className="flex items-center justify-between gap-1 p-1 bg-white rounded-xl border border-slate-200/80 shadow-sm animate-pulse">
+          {periods.map((p) => (
+            <div key={p.value} className="flex-1 py-3 bg-slate-100 rounded-lg" />
+          ))}
+        </div>
+
+        {/* Health Card Skeleton */}
+        <div 
+          className="rounded-2xl p-4 text-white shadow-md relative overflow-hidden animate-pulse space-y-3"
+          style={{ backgroundColor: 'var(--primary-color, #003049)' }}
+        >
+          <div className="h-4 w-36 bg-white/20 rounded-md" />
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="bg-white/10 rounded-xl p-3 h-20" />
+            <div className="bg-white/10 rounded-xl p-3 h-20" />
+          </div>
+        </div>
+
+        {/* 6-Month Chart Skeleton */}
+        <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3 animate-pulse">
+          <div className="h-4 w-44 bg-slate-100 rounded-md" />
+          <div className="h-32 bg-slate-50 rounded-xl" />
+        </div>
+
+        {/* Category Skeleton */}
+        <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-3 animate-pulse">
+          <div className="h-4 w-40 bg-slate-100 rounded-md" />
+          <div className="space-y-2">
+            <div className="h-6 bg-slate-50 rounded-lg" />
+            <div className="h-6 bg-slate-50 rounded-lg" />
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 text-center space-y-2">
         <AlertCircle className="w-5 h-5 mx-auto text-rose-500" />
         <p>{error}</p>
         <button
-          onClick={fetchAnalytics}
+          onClick={() => fetchAnalytics(true)}
           className="px-3 py-1 bg-white border border-rose-200 rounded-lg text-rose-700 font-medium"
         >
           Coba Lagi
@@ -105,6 +178,13 @@ export const AnalyticsDashboard = ({ groupId, groupName }) => {
           </button>
         ))}
       </div>
+
+      {isRevalidating && (
+        <div className="flex items-center justify-center gap-1.5 text-[10px] font-medium text-slate-400 animate-fadeIn">
+          <Sparkles className="w-3 h-3 text-sky-500 animate-spin" />
+          <span>Memperbarui analitik terkini...</span>
+        </div>
+      )}
 
       {/* 1. Financial Health & Savings Card */}
       <div 

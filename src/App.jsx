@@ -35,6 +35,7 @@ const Dashboard = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [analyticsRefreshTrigger, setAnalyticsRefreshTrigger] = useState(0);
 
   // Load Groups
   const fetchGroups = async () => {
@@ -129,6 +130,7 @@ const Dashboard = () => {
     try {
       await transactionService.deleteTransaction(id);
       fetchGroupData(currentGroup.id);
+      setAnalyticsRefreshTrigger((prev) => prev + 1);
     } catch (err) {
       console.error('Error deleting transaction:', err);
       alert('Gagal menghapus transaksi.');
@@ -138,6 +140,7 @@ const Dashboard = () => {
   const handleTransactionSuccess = () => {
     if (currentGroup?.id) {
       fetchGroupData(currentGroup.id);
+      setAnalyticsRefreshTrigger((prev) => prev + 1);
     }
   };
 
@@ -162,34 +165,37 @@ const Dashboard = () => {
       activeTab={activeTab}
       onTabChange={setActiveTab}
     >
-      {activeTab === 'transactions' ? (
-        <>
-          {/* Financial Summary */}
-          <SummaryCards
-            summary={summary}
-            groupName={currentGroup?.name}
-            loading={loadingSummary}
-          />
+      {/* Persistent Tab: Transaksi */}
+      <div className={activeTab === 'transactions' ? 'space-y-4' : 'hidden'}>
+        {/* Financial Summary */}
+        <SummaryCards
+          summary={summary}
+          groupName={currentGroup?.name}
+          loading={loadingSummary}
+        />
 
-          {/* Transaction History & Filter */}
-          <TransactionList
-            transactions={transactions}
-            loading={loadingTransactions}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-            selectedYear={selectedYear}
-            setSelectedYear={setSelectedYear}
-            onEditTransaction={handleEditTransaction}
-            onDeleteTransaction={handleDeleteTransaction}
-            currentUserId={user?.id}
-          />
-        </>
-      ) : (
+        {/* Transaction History & Filter */}
+        <TransactionList
+          transactions={transactions}
+          loading={loadingTransactions}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
+          onEditTransaction={handleEditTransaction}
+          onDeleteTransaction={handleDeleteTransaction}
+          currentUserId={user?.id}
+        />
+      </div>
+
+      {/* Persistent Tab: Analitik */}
+      <div className={activeTab === 'analytics' ? 'space-y-4' : 'hidden'}>
         <AnalyticsDashboard
           groupId={currentGroup?.id}
           groupName={currentGroup?.name}
+          refreshTrigger={analyticsRefreshTrigger}
         />
-      )}
+      </div>
 
       {/* Modals */}
       <TransactionModal
