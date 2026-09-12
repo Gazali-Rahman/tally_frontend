@@ -201,6 +201,22 @@ const Dashboard = () => {
             message: event.message || `${userName || 'Pasangan'} menghapus transaksi`,
           });
         }
+      })
+      .listen('.group.updated', (event) => {
+        const updatedGroup = event.group;
+        if (updatedGroup) {
+          setGroups((prev) =>
+            prev.map((g) => (g.id === updatedGroup.id ? { ...g, ...updatedGroup } : g))
+          );
+          if (currentGroup?.id === updatedGroup.id) {
+            setCurrentGroup((prev) => ({ ...prev, ...updatedGroup }));
+          }
+          setNotification({
+            type: 'group',
+            title: 'Nama Dompet Diperbarui',
+            message: event.message || `Nama grup diperbarui menjadi "${updatedGroup.name}"`,
+          });
+        }
       });
 
     return () => {
@@ -254,6 +270,16 @@ const Dashboard = () => {
   const handleGroupCreated = (newGroup) => {
     fetchGroups();
     setCurrentGroup(newGroup);
+  };
+
+  const handleGroupUpdated = (updatedGroup) => {
+    setGroups((prev) =>
+      prev.map((g) => (g.id === updatedGroup.id ? { ...g, ...updatedGroup } : g))
+    );
+    if (currentGroup?.id === updatedGroup.id) {
+      setCurrentGroup((prev) => ({ ...prev, ...updatedGroup }));
+    }
+    fetchGroups();
   };
 
   const handleMemberUpdated = () => {
@@ -331,6 +357,7 @@ const Dashboard = () => {
         currentUser={user}
         onGroupCreated={handleGroupCreated}
         onMemberUpdated={handleMemberUpdated}
+        onGroupUpdated={handleGroupUpdated}
       />
 
       <ThemeModal

@@ -67,6 +67,10 @@ export const groupService = {
     const res = await api.post('/groups', { name });
     return res.data;
   },
+  updateGroup: async (groupId, name) => {
+    const res = await api.put(`/groups/${groupId}`, { name });
+    return res.data;
+  },
   inviteMember: async (groupId, email) => {
     const res = await api.post(`/groups/${groupId}/invite`, { email });
     return res.data;
